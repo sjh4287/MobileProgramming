@@ -17,6 +17,7 @@ public class TerminalInfo
 
     private String Tmname;
 
+
     public String getVno ()
     {
         return Vno;

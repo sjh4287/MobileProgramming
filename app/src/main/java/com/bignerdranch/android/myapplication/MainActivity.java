@@ -6,7 +6,6 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
@@ -14,7 +13,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -25,23 +23,16 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.ViewFlipper;
 
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONArray;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.util.List;
 
 import retrofit2.Call;
@@ -49,7 +40,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.Tag;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener {
 
@@ -94,8 +84,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         String url = "http://api.nubija.com:1577/"; //누비자 api url
         Retrofit retrofit = new Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create()).build();
 
-        Terminal term = retrofit.create(Terminal.class);
-        Call<TerminalInfo> call = term.getPosts("post"); //java.lang.IllegalArgumentException
+        TermInterface term = retrofit.create(TermInterface.class);
+        Call<Terminal> call = term.getPosts(); //java.lang.IllegalArgumentException
 
            call.enqueue(new Callback<Terminal>() {
             @Override
@@ -105,46 +95,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //애초에 터미널 객체가 잘못되어있음 JSON 자체의 형식에 안맞아서 못가져옴 
                     terminalList = response.body().getTerminalInfo();
                     for (int i = 0; i < terminalList.length; i ++) {
+                        fav.setText(terminalList[i].getVno());
                         Log.d("받아온 정거장 번호", terminalList[i].getVno());  //각 배열 요소에서 Vno만 뽑아서 출력 
                     }
                 }
                 else {
-                  
+
                 }
             }
-
-            @Override
             public void onFailure(Call<Terminal> call, Throwable t) {
-                Log.d("왜 실패함", String.valueOf(t));
-            }
-     
+                   Log.d("왜 실패함", String.valueOf(t));
+               }
+
+
+
         });
-        ///////////////////Json 파싱 2///////////////////////////////////////////////
-
-        /*try {
-            InputStream is = new URL("http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=kTKnDZYpryizkfmPsCyu/")
-                                                                                                            .openStream();
-            BufferedReader rd = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-            String str ="";
-            StringBuffer buffer = new StringBuffer();
-            while((str = rd.readLine()) != null) {
-                buffer.append(str);
-            }
-            fav.setText(str);
-        } catch (IOException | RuntimeException e) {
-            e.printStackTrace();
-        }
-
-        fav = (TextView) findViewById(R.id.fav);*/
-
-        ///////////////////////////////////////////////////////////////////////
 
         ETStart = (EditText) findViewById(R.id.ETStart);
         ETFinish = (EditText) findViewById(R.id.ETFinish);
         btnStart = (Button) findViewById(R.id.btnStart);
         btnFinish = (Button) findViewById(R.id.btnFinish);
         vFlipper = (ViewFlipper) findViewById(R.id.viewFlipper1);
-
+        fav = (TextView) findViewById(R.id.fav);
 
         mapFragment = SupportMapFragment.newInstance();
         getSupportFragmentManager()
