@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.bignerdranch.android.myapplication">
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>//네트워크로 위치 측정
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>//gps 센서로 위치 측정
+    <uses-permission android:name="android.permission.INTERNET"/>//인터넷 사용 권한
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.MyApplication"
+        android:usesCleartextTraffic="true"> //인터넷사용 권한
+
+        <meta-data android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyAoxCo9-s6U0gQzBozEfldv0GdLR-r_p2c"/>
+
+        <meta-data android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version"/>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>
