@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
@@ -21,12 +22,14 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -46,26 +49,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     ViewFlipper vFlipper; //메인화면과 즐겨찾기화면 전환할 뷰플리퍼
     int FlipperCount = 0;//뷰플리퍼가 순환되지 않게 하기 위한 변수
     EditText ETStart, ETFinish; //출발지와 도착지 입력받을 EditText
-    Button btnStart, btnFinish; //출발지와 도착지 입력후 이벤트 처리할 버튼
+    Button btnStart, btnFinish, w; //출발지와 도착지 입력후 이벤트 처리할 버튼
     SupportMapFragment mapFragment; //지도보여줄 프래그먼트
     GoogleMap mMap;// 구글지도
     TextView fav;
+    Marker []markers = new Marker[300];
+    int MarkerCount = 0;
+    int StartCount = 0, FinishCount = 0;
+    int Count = 0;//Start 먼저하면 0 Finish 먼저하면 1
     private Marker currentMarker = null;
     
     
     ///여기에 전역변수 생성, 받아온 JSON의 데이터를 처리할거 
     TerminalInfo[] terminalList;
 
-    
-    
-    
-    ////////////////////////Json 파싱///////////////////////////////
-
-    JSONArray jsonArray;
-
-
-
-    ///////////////////////////////////////////////////////////////
 
     String[] PERMISSIONS = { //위치권한 배열
             Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -95,9 +92,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     //애초에 터미널 객체가 잘못되어있음 JSON 자체의 형식에 안맞아서 못가져옴 
                     terminalList = response.body().getTerminalInfo();
                     for (int i = 0; i < terminalList.length; i ++) {
-                        fav.setText(terminalList[i].getVno());
+
                         Log.d("받아온 정거장 번호", terminalList[i].getVno());  //각 배열 요소에서 Vno만 뽑아서 출력 
                     }
+                    FirstAddMarkers();
+
                 }
                 else {
 
@@ -117,6 +116,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         btnFinish = (Button) findViewById(R.id.btnFinish);
         vFlipper = (ViewFlipper) findViewById(R.id.viewFlipper1);
         fav = (TextView) findViewById(R.id.fav);
+        //w=(Button)findViewById(R.id.btn);
 
         mapFragment = SupportMapFragment.newInstance();
         getSupportFragmentManager()
@@ -135,13 +135,82 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onClick(View view) {
                 if(ETStart.getText().toString().length() > 0) {
                     Location location = getLocationFromAddress(getApplicationContext(), ETStart.getText().toString());
-                    LatLng start = new LatLng(location.getLatitude(),location.getLongitude());
-                    AddMarker(start,"출발지","사용자가 입력한 출발지"); // 위치 입력한 곳에 마커찍힘 (삭제예정)
+                    if (location == null) {
+                        Toast.makeText(getApplicationContext(), "위치를 다시 입력하세요", Toast.LENGTH_LONG).show();
+                    } else {
+                        if (MarkerCount > 2) { //모든 정류장 마커들이 찍혀있을 때
+                            RemoveAllMarkers();
+                        } else if (StartCount == 1) { //이미 StartMarker가 찍혀있을 때 해당 마커 삭제
+                            markers[0].remove();
+                            MarkerCount--;
+                            StartCount = 0;
+                        }
+                        LatLng start = MinLocation(location); //가장 가까운 터미널의 위치
+                        //AddMarker(start,"출발지","사용자가 입력한 출발지");
+
+                        MarkerOptions markerOptions = new MarkerOptions();
+                        markerOptions.position(start);
+                        markerOptions.title("출발지");
+                        markerOptions.snippet("사용자가 입력한 출발지");
+
+                        markers[0] = mMap.addMarker(markerOptions);
+
+                        MarkerCount++;
+                        StartCount = 1;
+                    }
                 }
             }
         });
+
+        btnFinish.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+                if(ETFinish.getText().toString().length() > 0) {
+                    Location location = getLocationFromAddress(getApplicationContext(), ETFinish.getText().toString());
+                    if (location == null) {
+                        Toast.makeText(getApplicationContext(),"위치를 다시 입력하세요",Toast.LENGTH_LONG).show();
+                    } else {
+                        if (MarkerCount > 2) { //모든 정류장 마커들이 찍혀있을 때
+                            RemoveAllMarkers();
+                        } else if (FinishCount == 1) { //이미 StartMarker가 찍혀있을 때 해당 마커 삭제
+                            markers[1].remove();
+                            MarkerCount--;
+                            FinishCount = 0;
+                        }
+                        LatLng finish = MinLocation(location); //가장 가까운 터미널의 위치
+                        //AddMarker(finish,"도착지","사용자가 입력한 도착지");
+
+                        MarkerOptions markerOptions = new MarkerOptions();
+                        markerOptions.position(finish);
+                        markerOptions.title("도착지");
+                        markerOptions.snippet("사용자가 입력한 도착지");
+
+                        markers[0] = mMap.addMarker(markerOptions);
+
+                        MarkerCount++;
+                        FinishCount = 1;
+                    }
+                }
+            }
+        });
+
+       /*
+        w.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view) {
+
+            }
+        });*/
+
     }
 
+    public void FirstAddMarkers(){
+        for(int i = 0; i<terminalList.length; i++){
+            AddMarker(makeLatLng(terminalList[i].getLatitude(),terminalList[i].getLongitude()),terminalList[i].getTmname(),"정류장");
+            markers[i].setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+            //markers[i].setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.H));
+        }
+    }
 
     private Location getLocationFromAddress(Context context, String address) { //검색한 장소 위치값 가져오기
         Geocoder geocoder = new Geocoder(context);
@@ -211,6 +280,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         else
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CITY_HALL, DEFAULT_ZOOM));
         //googleMap.setOnInfoWindowClickListener((GoogleMap.OnInfoWindowClickListener) this);
+
+
+
+    }
+
+    public LatLng makeLatLng(String Lat, String Lng){ //String의 위도 경도를 double로 형변환하여 LatLng 객체 생성
+        double dLat = Double.parseDouble(Lat);
+        double dLng = Double.parseDouble(Lng);
+        return new LatLng(dLat,dLng);
     }
 
     public void AddMarker(LatLng latLng, String title, String snippet) { //누비자정류장 마커 추가(위치, 정류장 이름, snippet)
@@ -218,7 +296,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerOptions.position(latLng);
         markerOptions.title(title);
         markerOptions.snippet(snippet);
-        mMap.addMarker(markerOptions);
+
+        markers[MarkerCount] = mMap.addMarker(markerOptions);
+        MarkerCount++;
+    }
+
+
+    public void RemoveAllMarkers(){
+        for(int i = 0;i < MarkerCount; i++){
+            markers[i].remove();
+        }
+        MarkerCount = 0;
+    }
+
+    public void RemoveMarker(LatLng latLng){
+
     }
 
     ////////////////////다이얼로그 추가///////////////////////
@@ -241,4 +333,26 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onLocationChanged(@NonNull Location location) {
 
     }
+
+    public LatLng MinLocation(Location loc){
+        double locLat = loc.getLatitude();
+        double locLng = loc.getLongitude();
+        double temp;
+        int result = 0;
+        double min = 0;
+        for(int i = 0; i<terminalList.length; i++){
+            double dLat = Double.parseDouble(terminalList[i].getLatitude());
+            double dLng = Double.parseDouble(terminalList[i].getLongitude());
+            temp = Math.sqrt(Math.abs(locLat - dLat)*Math.abs(locLat - dLat) + Math.abs(locLng - dLng)*Math.abs(locLng - dLng));
+            if(min == 0){
+                min = temp;
+                result = i;
+            } else if(min > temp){
+                min = temp;
+                result = i;
+            }
+        }
+        return new LatLng(Double.parseDouble(terminalList[result].getLatitude()),Double.parseDouble(terminalList[result].getLongitude()));
+    }
+
 }

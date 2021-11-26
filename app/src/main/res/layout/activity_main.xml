@@ -27,6 +27,7 @@
             android:layout_weight="1"
             android:backgroundTint="#247C27"
             android:text="입력" />
+
     </LinearLayout>
 
 
