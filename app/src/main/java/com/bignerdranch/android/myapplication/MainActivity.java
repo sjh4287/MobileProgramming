@@ -15,6 +15,7 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -45,8 +46,10 @@ import java.util.List;
 
 import retrofit2.Call;
 import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.http.Tag;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener {
 
@@ -62,14 +65,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     ////////////////////////Json 파싱///////////////////////////////
 
-    /*JSONArray jsonArray;
-    String url = "http://api.nubija.com:1577/"; //누비자 api url
-    Retrofit retrofit = new Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create()).build();
+    JSONArray jsonArray;
 
-    Terminal term = retrofit.create(Terminal.class);
-    Call<TerminalInfo> call = term.getPosts("1");
-
-    call.enqueue(new Callback<TerminalInfo>)*/
 
 
     ///////////////////////////////////////////////////////////////
@@ -88,10 +85,33 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         setTitle("메인");
 
-        ///////////////////Json 파싱 2/////////////////////////////////////////////
-        /*
-        try {
-            InputStream is = new URL("http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=kTKnDZYpryizkfmPsCyu")
+        String url = "http://api.nubija.com:1577/"; //누비자 api url
+        Retrofit retrofit = new Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create()).build();
+
+        Terminal term = retrofit.create(Terminal.class);
+        Call<TerminalInfo> call = term.getPosts("post"); //java.lang.IllegalArgumentException
+
+        call.enqueue(new Callback<TerminalInfo>() {
+            @Override
+            public void onResponse(Call<TerminalInfo> call, Response<TerminalInfo> response) {
+                if(response.isSuccessful()){
+                    TerminalInfo terminalInfo = response.body();
+                    Log.d("Retrofit", "onResponse 성공, 결과\n " +terminalInfo.toString());
+                }
+                else{
+
+                }
+            }
+
+            @Override
+            public void onFailure(Call<TerminalInfo> call, Throwable t) {
+
+            }
+        });
+        ///////////////////Json 파싱 2///////////////////////////////////////////////
+
+        /*try {
+            InputStream is = new URL("http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=kTKnDZYpryizkfmPsCyu/")
                                                                                                             .openStream();
             BufferedReader rd = new BufferedReader(new InputStreamReader(is, "UTF-8"));
             String str ="";
@@ -104,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             e.printStackTrace();
         }
 
-        fav = (TextView) findViewById(R.id.fav); */
+        fav = (TextView) findViewById(R.id.fav);*/
 
         ///////////////////////////////////////////////////////////////////////
 

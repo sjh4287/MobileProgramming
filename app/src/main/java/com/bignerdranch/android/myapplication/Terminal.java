@@ -13,7 +13,7 @@ import retrofit2.http.Path;
 //레트로핏 인터페이스
 
 public interface Terminal {
-    @GET("ubike/nubijaInfoApi.do?apikey=kTKnDZYpryizkfmPsCyu")
+    @GET("http://api.nubija.com:1577/ubike/nubijaInfoApi.do?apikey=kTKnDZYpryizkfmPsCyu")
     Call<TerminalInfo> getPosts(@Path("post") String post);
 
 }
