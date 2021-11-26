@@ -61,8 +61,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     GoogleMap mMap;// 구글지도
     TextView fav;
     private Marker currentMarker = null;
+    
+    
+    ///여기에 전역변수 생성, 받아온 JSON의 데이터를 처리할거 
+    TerminalInfo[] terminalList;
 
-
+    
+    
+    
     ////////////////////////Json 파싱///////////////////////////////
 
     JSONArray jsonArray;
@@ -91,22 +97,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Terminal term = retrofit.create(Terminal.class);
         Call<TerminalInfo> call = term.getPosts("post"); //java.lang.IllegalArgumentException
 
-        call.enqueue(new Callback<TerminalInfo>() {
+           call.enqueue(new Callback<Terminal>() {
             @Override
-            public void onResponse(Call<TerminalInfo> call, Response<TerminalInfo> response) {
-                if(response.isSuccessful()){
-                    TerminalInfo terminalInfo = response.body();
-                    Log.d("Retrofit", "onResponse 성공, 결과\n " +terminalInfo.toString());
+            public void onResponse(Call<Terminal> call, Response<Terminal> response) {
+                if (response.body() != null) {
+                    //터미널 리스트라는 배열에다가 받아온 터미널의 터미널정보 배열을 저장 
+                    //애초에 터미널 객체가 잘못되어있음 JSON 자체의 형식에 안맞아서 못가져옴 
+                    terminalList = response.body().getTerminalInfo();
+                    for (int i = 0; i < terminalList.length; i ++) {
+                        Log.d("받아온 정거장 번호", terminalList[i].getVno());  //각 배열 요소에서 Vno만 뽑아서 출력 
+                    }
                 }
-                else{
-
+                else {
+                  
                 }
             }
 
             @Override
-            public void onFailure(Call<TerminalInfo> call, Throwable t) {
-
+            public void onFailure(Call<Terminal> call, Throwable t) {
+                Log.d("왜 실패함", String.valueOf(t));
             }
+     
         });
         ///////////////////Json 파싱 2///////////////////////////////////////////////
 
