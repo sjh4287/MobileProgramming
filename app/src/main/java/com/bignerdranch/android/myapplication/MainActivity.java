@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     terminalList = response.body().getTerminalInfo();
                     for (int i = 0; i < terminalList.length; i ++) {
 
-                        Log.d("받아온 정거장 번호", terminalList[i].getVno());  //각 배열 요소에서 Vno만 뽑아서 출력
+                        Log.d("받아온 정거장 번호 :", terminalList[i].getVno());  //각 배열 요소에서 Vno만 뽑아서 출력
                     }
                     FirstAddMarkers();
                 }
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
             public void onFailure(Call<Terminal> call, Throwable t) {
-                   Log.d("왜 실패함", String.valueOf(t));
+                   Log.d("실패 : ", String.valueOf(t));
                }
 
 
@@ -145,7 +145,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } else {
             ActivityCompat.requestPermissions(this, PERMISSIONS, PackageManager.PERMISSION_GRANTED);
         }
-
 
 
         btnStart.setOnClickListener(new View.OnClickListener() { //출발지 입력 버튼
@@ -245,7 +244,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    @Override //권한 허용하고 앱 재실행해야하는거 해결
+    @Override //권한 허용하고 앱 재실행해야하는거 해결해야함!!
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mapFragment.getMapAsync(this);  //지도 실행
@@ -330,13 +329,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     list.add(tName +"\n" + "\n대여 가능한 자전거수: " + tPark + "\n반납 가능한 자전거수: " + tEmpty);
                 }
 
-
-
-
                 ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);;
                 listView.setAdapter(adapter);
-
-
 
                 cursor.close();
                 sqlDB.close();
@@ -365,7 +359,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         else
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CITY_HALL, DEFAULT_ZOOM));
-        //googleMap.setOnInfoWindowClickListener((GoogleMap.OnInfoWindowClickListener) this);
 
         mMap.setOnMarkerClickListener(this);
 
@@ -382,10 +375,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerOptions.position(latLng);
         markerOptions.title(title);
 
-
         markers[MarkerCount] = mMap.addMarker(markerOptions);
-
-
 
         MarkerCount++;
     }
@@ -408,10 +398,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             markers[i].remove();
         }
         MarkerCount = 0;
-    }
-
-    public void RemoveMarker(LatLng latLng){
-
     }
 
 
