@@ -29,6 +29,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/ETStart"
                     android:layout_weight="1"
+                    android:maxLines="1"
                     android:hint="출발지를 입력하세요"/>
 
                 <Button
@@ -52,6 +53,7 @@
                     android:layout_height="wrap_content"
                     android:id="@+id/ETFinish"
                     android:hint="도착지를 입력하세요"
+                    android:maxLines="1"
                     android:layout_weight="1"/>
 
                 <Button

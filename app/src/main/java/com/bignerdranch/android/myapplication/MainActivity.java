@@ -444,7 +444,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         AlertDialog.Builder dlg = new AlertDialog.Builder(MainActivity.this);
         dlg.setTitle(getName(marker));
-        dlg.setMessage("반납 가능한 자전거 수: " + getEmpty(marker)+ "\n" + "대여 가능한 자전거 수: " + getPark(marker));
+        dlg.setMessage("대여 가능한 자전거 수: " + getPark(marker)+ "\n" + "반납 가능한 자전거 수: " + getEmpty(marker));
         dlg.setPositiveButton("확인",null);
 
         if(isValid(marker.getTitle())){
