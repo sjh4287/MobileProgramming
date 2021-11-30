@@ -1,20 +1,14 @@
 package com.bignerdranch.android.myapplication;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.graphics.Color;
 import android.location.Address;
+import android.location.Criteria;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationListener;
@@ -29,9 +23,13 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -41,8 +39,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-
-import org.json.JSONArray;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,35 +52,29 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, LocationListener, GoogleMap.OnMarkerClickListener {
 
     ViewFlipper vFlipper; //메인화면과 즐겨찾기화면 전환할 뷰플리퍼
-    int FlipperCount = 0;//뷰플리퍼가 순환되지 않게 하기 위한 변수
     EditText ETStart, ETFinish; //출발지와 도착지 입력받을 EditText
     Button btnStart, btnFinish, btnAll; //출발지와 도착지 입력후 이벤트 처리할 버튼
     SupportMapFragment mapFragment; //지도보여줄 프래그먼트
     GoogleMap mMap;// 구글지도
-
-    Marker []markers = new Marker[300];
-    ListView listView;
+    ListView listView; //즐겨찾기 리스트뷰
 
     myDBHelper myHelper;
-    SQLiteDatabase sqlDB;
+    SQLiteDatabase sqlDB; //SQLite 데이터베이스
 
-    int MarkerCount = 0;
-    int StartCount = 0, FinishCount = 0;
-    
-    
-    ///여기에 전역변수 생성, 받아온 JSON의 데이터를 처리할거 
-    TerminalInfo[] terminalList;
+    Marker []markers = new Marker[300]; //마커 객체배열
+    int MarkerCount = 0; //마커의 개수 변수
+    int StartCount = 0, FinishCount = 0; //출발지 마커와 도착지 마커의 개수 변수
+    int FlipperCount = 0;//뷰플리퍼가 순환되지 않게 하기 위한 변수
 
+    TerminalInfo[] terminalList; //받아온 터미널의 정보들이 담긴 배열
 
     String[] PERMISSIONS = { //위치권한 배열
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.ACCESS_FINE_LOCATION
     };
 
-
     int DEFAULT_ZOOM = 16; //디폴트 줌
     LatLng CITY_HALL = new LatLng(35.245595, 128.6897643); //디폴트 위치값 (창원대학교)
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,47 +83,41 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setTitle("메인");
 
         String url = "http://api.nubija.com:1577/"; //누비자 api url
-        Retrofit retrofit = new Retrofit.Builder().baseUrl(url).addConverterFactory(GsonConverterFactory.create()).build();
+
+        Retrofit retrofit = new Retrofit.Builder()
+                                        .baseUrl(url)
+                                        .addConverterFactory(GsonConverterFactory.create())
+                                        .build();
 
         TermInterface term = retrofit.create(TermInterface.class);
-        Call<Terminal> call = term.getPosts(); //java.lang.IllegalArgumentException
+        Call<Terminal> call = term.getPosts();
 
            call.enqueue(new Callback<Terminal>() {
             @Override
             public void onResponse(Call<Terminal> call, Response<Terminal> response) {
                 if (response.body() != null) {
-                    //터미널 리스트라는 배열에다가 받아온 터미널의 터미널정보 배열을 저장 
-                    //애초에 터미널 객체가 잘못되어있음 JSON 자체의 형식에 안맞아서 못가져옴 
+                    //터미널 리스트라는 배열에다가 받아온 터미널의 터미널정보 배열을 저장
                     terminalList = response.body().getTerminalInfo();
                     for (int i = 0; i < terminalList.length; i ++) {
-
                         Log.d("받아온 정거장 번호 :", terminalList[i].getVno());  //각 배열 요소에서 Vno만 뽑아서 출력
                     }
-                    FirstAddMarkers();
-                }
-                else {
-
                 }
             }
             public void onFailure(Call<Terminal> call, Throwable t) {
                    Log.d("실패 : ", String.valueOf(t));
                }
-
-
-
         });
 
-        ETStart = (EditText) findViewById(R.id.ETStart);
-        ETFinish = (EditText) findViewById(R.id.ETFinish);
-        btnStart = (Button) findViewById(R.id.btnStart);
-        btnFinish = (Button) findViewById(R.id.btnFinish);
-        btnAll = (Button) findViewById(R.id.btnAll);
-        vFlipper = (ViewFlipper) findViewById(R.id.viewFlipper1);
-
-        listView = (ListView) findViewById(R.id.listView);
-
+        ETStart = (EditText) findViewById(R.id.ETStart); // 출발지 입력 EditText
+        ETFinish = (EditText) findViewById(R.id.ETFinish); // 도착지 입력 EditText
+        btnStart = (Button) findViewById(R.id.btnStart); // 출발지 입력 버튼
+        btnFinish = (Button) findViewById(R.id.btnFinish); // 도착지 입력 버튼
+        btnAll = (Button) findViewById(R.id.btnAll); // 모든 정류장 출력 버튼
+        vFlipper = (ViewFlipper) findViewById(R.id.viewFlipper1); // 뷰플리퍼
+        listView = (ListView) findViewById(R.id.listView); // 즐겨찾기 리스트뷰
 
         myHelper = new myDBHelper(this);
+
         mapFragment = SupportMapFragment.newInstance();
         getSupportFragmentManager()
                 .beginTransaction()
@@ -235,23 +219,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        btnAll.setOnClickListener(new View.OnClickListener() {
+        btnAll.setOnClickListener(new View.OnClickListener() { //모든 마커 출력 버튼을 눌렀을 때
             @Override
-            public void onClick(View v) {
+            public void onClick(View v) { //현재 지도위의 모든 마커를 삭제하고 새로 마커들을 출력한다.
                 RemoveAllMarkers();
                 FirstAddMarkers();
             }
         });
+
     }
 
-    @Override //권한 허용하고 앱 재실행해야하는거 해결해야함!!
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mapFragment.getMapAsync(this);  //지도 실행
     }
 
-    public void FirstAddMarkers(){
-        for(int i = 0; i<terminalList.length; i++){
+    public void FirstAddMarkers(){ //지도에 모든 정류장의 위치에 마커들을 표시한다.
+        for(int i = 0; i<terminalList.length; i++){ //terminalList의 길이(터미널의 개수)만큼 반복
             AddMarker(makeLatLng(terminalList[i].getLatitude(),terminalList[i].getLongitude()),terminalList[i].getVno());
 
         } for(int i = 0; i < terminalList.length; i++){
@@ -268,23 +253,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private Location getLocationFromAddress(Context context, String address) { //검색한 장소 위치값 가져오기
-        Geocoder geocoder = new Geocoder(context);//Geocoder 가 뭔지 알기
-        List<Address> addresses;
+        Geocoder geocoder = new Geocoder(context); //지오코더 객체 생성
+        List<Address> addresses; //Address 리스트 생성
         Location resLocation = new Location("");
         try {
-            addresses = geocoder.getFromLocationName(address, 5);
-            if((addresses == null) || (addresses.size() == 0)) {
+            addresses = geocoder.getFromLocationName(address, 5); //매개변수 address의 검색된 결과 최대 5개까지 addresses 리스트에 삽입
+            if((addresses == null) || (addresses.size() == 0)) { // 검색한 장소가 없을 때
                 return null;
             }
-            Address addressLoc = addresses.get(0);
+            Address addressLoc = addresses.get(0); //리스트의 첫 인덱스
 
-            resLocation.setLatitude(addressLoc.getLatitude());
-            resLocation.setLongitude(addressLoc.getLongitude());
+            resLocation.setLatitude(addressLoc.getLatitude()); //위도설정
+            resLocation.setLongitude(addressLoc.getLongitude()); //경도설정
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return resLocation;
+        return resLocation; //Location 반환
     }
 
     public boolean onCreateOptionsMenu(Menu menu){
@@ -298,14 +283,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch(item.getItemId()) {
             case R.id.main:
                 setTitle("메인");
-                if(FlipperCount != 0) {
+                if(FlipperCount != 0) { //메인일때 메인을 선택하면 즐겨찾기로 넘어가는것 방지
                     vFlipper.showPrevious();
                     FlipperCount = 0;
                 }
                 return true;
             case R.id.favorite:
                 setTitle("즐겨찾기");
-                if(FlipperCount != 1) {
+                if(FlipperCount != 1) { //즐겨찾기일때 즐겨찾기를 선택하면 메인으로 넘어가는것 방지
                     vFlipper.showNext();
                     FlipperCount = 1;
                 }
@@ -329,7 +314,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     list.add(tName +"\n" + "\n대여 가능한 자전거수: " + tPark + "\n반납 가능한 자전거수: " + tEmpty);
                 }
 
-                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);;
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, list);
                 listView.setAdapter(adapter);
 
                 cursor.close();
@@ -350,18 +335,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onMapReady(@NonNull GoogleMap googleMap) {
+    public void onMapReady(@NonNull GoogleMap googleMap) { //지도 준비되면 호출됨
         mMap = googleMap;
 
         if(checkPermission()) {
             googleMap.setMyLocationEnabled(true);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(getMyLocation(),15));
         }
-        else
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CITY_HALL, DEFAULT_ZOOM));
-
+        else {
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(CITY_HALL, DEFAULT_ZOOM));
+        }
         mMap.setOnMarkerClickListener(this);
-
     }
 
     public LatLng makeLatLng(String Lat, String Lng){ //String의 위도 경도를 double로 형변환하여 LatLng 객체 생성
@@ -393,6 +377,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return 0;
         }
     }
+
     public void RemoveAllMarkers(){
         for(int i = 0;i < MarkerCount; i++){
             markers[i].remove();
@@ -409,6 +394,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return new LatLng(35.245595,128.6897643);
         }
         Location lastKnownLocation = locationManager.getLastKnownLocation(locationProvider);
+
+        if (lastKnownLocation == null) { //공기계일때 최근 위치값이 null인경우 발생 예외 처리
+            final double[] loc = new double[2];
+            LocationListener locationListener = location -> {
+                loc[0] = location.getLatitude();
+                loc[1] = location.getLongitude();
+            };
+
+            locationManager.requestLocationUpdates(String.valueOf(locationManager.getBestProvider(new Criteria(), true)), 1000, 0, locationListener);
+            return new LatLng(loc[0], loc[1]);
+        }
+
         return new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
     }
 
@@ -417,7 +414,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    public LatLng MinLocation(Location loc){
+    public LatLng MinLocation(Location loc){ //최소 거리 구하기
         double locLat = loc.getLatitude();
         double locLng = loc.getLongitude();
         double temp;
@@ -426,7 +423,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         for(int i = 0; i<terminalList.length; i++){
             double dLat = Double.parseDouble(terminalList[i].getLatitude());
             double dLng = Double.parseDouble(terminalList[i].getLongitude());
-            temp = Math.sqrt(Math.abs(locLat - dLat)*Math.abs(locLat - dLat) + Math.abs(locLng - dLng)*Math.abs(locLng - dLng));
+            temp = Math.sqrt(Math.abs(locLat - dLat)*Math.abs(locLat - dLat) + Math.abs(locLng - dLng)*Math.abs(locLng - dLng)); //피타고라스 이용해서 두 점사이의 거리 구하기
             if(min == 0){
                 min = temp;
                 result = i;
@@ -440,14 +437,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     @Override
-    public boolean onMarkerClick(@NonNull Marker marker) {
+    public boolean onMarkerClick(@NonNull Marker marker) { //마커 클릭했을 때 호출
 
         AlertDialog.Builder dlg = new AlertDialog.Builder(MainActivity.this);
         dlg.setTitle(getName(marker));
         dlg.setMessage("대여 가능한 자전거 수: " + getPark(marker)+ "\n" + "반납 가능한 자전거 수: " + getEmpty(marker));
         dlg.setPositiveButton("확인",null);
 
-        if(isValid(marker.getTitle())){
+        if(isValid(marker.getTitle())){ //즐겨찾기 된 마커를 클릭했을 때
             dlg.setNegativeButton("즐겨찾기 삭제", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -460,7 +457,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 }
             });
-        } else {
+        } else { //즐겨찾기가 되지 않은 마커를 클릭했을 때
             dlg.setNegativeButton("즐겨찾기 추가", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
@@ -479,9 +476,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return true;
     }
 
-    public String getName(Marker marker){
+    public String getName(Marker marker){ // 마커의 Title은 Vno
         int Vno = Integer.parseInt(marker.getTitle());
-        String result = "w";
+        String result = "";
 
         for(int i = 0; i < terminalList.length; i++){
             if(Vno == Integer.parseInt(terminalList[i].getVno())){
@@ -492,7 +489,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return result;
     }
 
-    public int getEmpty(Marker marker){
+    public int getEmpty(Marker marker){// 마커의 Title은 Vno
         int Vno = Integer.parseInt(marker.getTitle());
         int result = 0;
 
@@ -505,7 +502,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return result;
     }
 
-    public int getPark(Marker marker){
+    public int getPark(Marker marker){// 마커의 Title은 Vno
         int Vno = Integer.parseInt(marker.getTitle());
         int result = 0;
 
@@ -518,7 +515,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         return result;
     }
 
-    public boolean isValid(String Vno){
+    public boolean isValid(String Vno){ //해당 정류장이 데이터베이스에 들어있는가 판별
         sqlDB = myHelper.getReadableDatabase();
         Cursor cursor;
         cursor = sqlDB.rawQuery("SELECT * FROM termTBL;", null);

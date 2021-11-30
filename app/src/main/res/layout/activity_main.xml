@@ -8,9 +8,6 @@
     android:id="@+id/baseLayout"
     android:orientation="vertical">
 
-
-
-
     <ViewFlipper
         android:layout_width="match_parent"
         android:layout_height="match_parent"

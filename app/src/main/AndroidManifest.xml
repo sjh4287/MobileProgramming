@@ -13,7 +13,7 @@
         android:roundIcon="@drawable/icon1"
         android:supportsRtl="true"
         android:theme="@style/Theme.MyApplication"
-        android:usesCleartextTraffic="true"> //인터넷사용 권한
+        android:usesCleartextTraffic="true"> //Http 접속 허용
 
         <meta-data android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyAoxCo9-s6U0gQzBozEfldv0GdLR-r_p2c"/>
